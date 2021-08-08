@@ -1,7 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
-import { ChakraProvider, Center, Box, Text, Input, Avatar, Badge, Stack, Button } from '@chakra-ui/react';
-import { AiOutlineArrowRight } from 'react-icons/ai';
+import { ChakraProvider, Center, Input, Button } from '@chakra-ui/react';
+import { AiOutlineArrowRight, AiOutlineArrowLeft } from 'react-icons/ai';
 import axios from 'axios';
 import React from 'react';
 import UserCard from './components/UserCard';
@@ -11,9 +11,10 @@ class App extends React.Component {
     super();
     this.state = {
       defaultUsername: 'pakrym',
+      searchName: '',
       user: '',
       userFollowers: '',
-      lastUser: ''
+      lastUsers: [],
     };
   }
 
@@ -23,7 +24,7 @@ class App extends React.Component {
   }
 
   requestUserData = (user) => {
-    axios.get(`https://api.github.com/users/${user}`)
+    axios.get(`https://api.github.com/users/${user}`, {headers: {'User-Agent': 'https://api.github.com/meta'}})
       .then(res => {
         console.log(res);
         this.setState({
@@ -36,7 +37,7 @@ class App extends React.Component {
   }
 
   requestUserFollowerData = (user) => {
-    axios.get(`https://api.github.com/users/${user}/followers`)
+    axios.get(`https://api.github.com/users/${user}/followers`, {headers: {'User-Agent': 'User-Card-App'}})
     .then(res => {
       console.log(res);
       this.setState({
@@ -49,24 +50,65 @@ class App extends React.Component {
     })
   }
 
-  submitSearch = () => {
-    // make another request
+  submitSearch = e => {
+    e.preventDefault();
+    
+    this.addPreviousUser();
+    this.requestUserData(this.state.searchName);
+    this.requestUserFollowerData(this.state.searchName);
+    this.clearSearchField();
   }
 
-  handleChange = () => {
+  submitBack = e => {
+    e.preventDefault();
 
+    let lastUser = this.state.lastUsers.pop();
+    this.requestUserData(lastUser);
+    this.requestUserFollowerData(lastUser);
   }
 
-  handleBadgeClick = (user) => {
-    this.requestUserData(user)
+  doDisableBackButton = () => {
+    if (this.state.lastUsers.length === 0) {
+      return true;
+    } 
+    return false;
+  }
+
+  clearSearchField = e => {
+    this.setState({
+      ...this.state,
+      searchName: ''
+    });
+  }
+
+  handleChange = e => {
+    this.setState({
+      ...this.state,
+      [e.target.name] : e.target.value
+    })
+  }
+
+  addPreviousUser = () => {
+    this.setState({
+      ...this.state,
+      lastUsers: [...this.state.lastUsers, this.state.user.login],
+    });
+  }
+
+  handleBadgeClick = user => {
+    this.addPreviousUser();
+
+    this.requestUserData(user);
+    this.requestUserFollowerData(user);
   }
 
   render() {
     return (
       <ChakraProvider>
         <Center height='25vh'>
-          <Input placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
-          <Button onClick={() => {this.submitSearch()}} size='xs' rightIcon={<AiOutlineArrowRight/>}> Search </Button>
+          <Button onClick={this.submitBack} size='xs' isDisabled={this.doDisableBackButton()}> <AiOutlineArrowLeft/> </Button>
+          <Input name='searchName' value={this.state.searchName} onChange={this.handleChange} placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
+          <Button onClick={this.submitSearch} size='xs' rightIcon={<AiOutlineArrowRight/>}> Search </Button>
         </Center>
         <UserCard handleBadgeClick={this.handleBadgeClick} followers={this.state.userFollowers} user={this.state.user}/>
       </ChakraProvider>
