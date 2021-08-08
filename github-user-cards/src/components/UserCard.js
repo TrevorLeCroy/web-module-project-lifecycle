@@ -26,9 +26,9 @@ const UserCard = props => {
                         props.followers !== '' &&
                         props.followers.map(follower => {
                             return (
-                                <GridItem align='center'>
+                                <GridItem key={follower.id} align='center'>
                                     <button onClick={() => props.handleBadgeClick(follower.login)}>
-                                        <Badge key={follower.id}> {follower.login} </Badge>
+                                        <Badge> {follower.login} </Badge>
                                     </button>
                                 </GridItem>
                                 )

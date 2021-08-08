@@ -24,7 +24,7 @@ class App extends React.Component {
   }
 
   requestUserData = (user) => {
-    axios.get(`https://api.github.com/users/${user}`, {headers: {'User-Agent': 'https://api.github.com/meta'}})
+    axios.get(`https://api.github.com/users/${user}`)
       .then(res => {
         console.log(res);
         this.setState({
@@ -37,7 +37,7 @@ class App extends React.Component {
   }
 
   requestUserFollowerData = (user) => {
-    axios.get(`https://api.github.com/users/${user}/followers`, {headers: {'User-Agent': 'User-Card-App'}})
+    axios.get(`https://api.github.com/users/${user}/followers`)
     .then(res => {
       console.log(res);
       this.setState({
@@ -81,7 +81,16 @@ class App extends React.Component {
     });
   }
 
+  handleKeyPress = e => {
+    console.log(e.key);
+    if(e.key === 'Enter') {
+      this.submitSearch(e);
+    }
+
+  }
+
   handleChange = e => {
+    
     this.setState({
       ...this.state,
       [e.target.name] : e.target.value
@@ -107,7 +116,7 @@ class App extends React.Component {
       <ChakraProvider>
         <Center height='25vh'>
           <Button onClick={this.submitBack} size='xs' isDisabled={this.doDisableBackButton()}> <AiOutlineArrowLeft/> </Button>
-          <Input name='searchName' value={this.state.searchName} onChange={this.handleChange} placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
+          <Input onKeyPress={this.handleKeyPress} name='searchName' value={this.state.searchName} onChange={this.handleChange} placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
           <Button onClick={this.submitSearch} size='xs' rightIcon={<AiOutlineArrowRight/>}> Search </Button>
         </Center>
         <UserCard handleBadgeClick={this.handleBadgeClick} followers={this.state.userFollowers} user={this.state.user}/>
