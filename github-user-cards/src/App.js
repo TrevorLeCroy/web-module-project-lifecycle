@@ -1,0 +1,145 @@
+import logo from './logo.svg';
+import './App.css';
+import { ChakraProvider, Center, Input, Button, Text } from '@chakra-ui/react';
+import { AiOutlineArrowRight, AiOutlineArrowLeft } from 'react-icons/ai';
+import axios from 'axios';
+import React from 'react';
+import UserCard from './components/UserCard';
+
+class App extends React.Component {
+  constructor() {
+    super();
+    this.state = {
+      defaultUsername: 'pakrym',
+      searchName: '',
+      user: '',
+      userFollowers: '',
+      lastUsers: [],
+      error: false,
+      errorCode: ''
+    };
+  }
+
+  componentDidMount() {
+    this.requestUserData(this.state.defaultUsername);
+    this.requestUserFollowerData(this.state.defaultUsername);
+  }
+
+  requestUserData = (user) => {
+    axios.get(`https://api.github.com/users/${user}`)
+      .then(res => {
+        console.log(res);
+        this.setState({
+          ...this.state,
+          user: res.data,
+          error: false,
+          errorCode: ''
+        })
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState({
+          ...this.state,
+          error: true,
+          errorCode: ''
+        })
+      });
+  }
+
+  requestUserFollowerData = (user) => {
+    axios.get(`https://api.github.com/users/${user}/followers`)
+    .then(res => {
+      console.log(res);
+      this.setState({
+        ...this.state,
+        userFollowers: res.data
+      })
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }
+
+  submitSearch = e => {
+    e.preventDefault();
+    
+    this.addPreviousUser();
+    this.requestUserData(this.state.searchName);
+    this.requestUserFollowerData(this.state.searchName);
+    this.clearSearchField();
+  }
+
+  submitBack = e => {
+    e.preventDefault();
+    
+    let lastUser = this.state.lastUsers.pop();
+    this.requestUserData(lastUser);
+    this.requestUserFollowerData(lastUser);
+  }
+
+  doDisableBackButton = () => {
+    if (this.state.lastUsers.length === 0) {
+      return true;
+    } 
+    return false;
+  }
+
+  clearSearchField = e => {
+    this.setState({
+      ...this.state,
+      searchName: ''
+    });
+  }
+
+  handleKeyPress = e => {
+    console.log(e.key);
+    if(e.key === 'Enter') {
+      this.submitSearch(e);
+    }
+  }
+
+  handleChange = e => {
+    this.setState({
+      ...this.state,
+      [e.target.name] : e.target.value
+    })
+  }
+
+  addPreviousUser = () => {
+    this.setState({
+      ...this.state,
+      lastUsers: [...this.state.lastUsers, this.state.user.login],
+    });
+  }
+
+  handleBadgeClick = user => {
+    this.addPreviousUser();
+
+    this.requestUserData(user);
+    this.requestUserFollowerData(user);
+  }
+
+  render() {
+    return (
+      <ChakraProvider>
+        <Center height='25vh'>
+          <Button onClick={this.submitBack} size='xs' isDisabled={this.doDisableBackButton()}> <AiOutlineArrowLeft/> </Button>
+          <Input onKeyPress={this.handleKeyPress} name='searchName' value={this.state.searchName} onChange={this.handleChange} placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
+          <Button onClick={this.submitSearch} size='xs' rightIcon={<AiOutlineArrowRight/>}> Search </Button>
+        </Center>
+        {
+          this.state.error === false &&
+          <UserCard handleBadgeClick={this.handleBadgeClick} followers={this.state.userFollowers} user={this.state.user}/>
+        }
+        {
+          this.state.error === true &&
+          <Center>
+            <Text fontSize='4xl'> Oops, looks like we encountered an error in your request. </Text>
+          </Center>
+        }
+      </ChakraProvider>
+    );
+  }
+}
+
+export default App;
