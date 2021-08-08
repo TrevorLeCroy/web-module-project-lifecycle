@@ -1,6 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
-import { ChakraProvider, Center, Input, Button } from '@chakra-ui/react';
+import { ChakraProvider, Center, Input, Button, Text } from '@chakra-ui/react';
 import { AiOutlineArrowRight, AiOutlineArrowLeft } from 'react-icons/ai';
 import axios from 'axios';
 import React from 'react';
@@ -15,6 +15,8 @@ class App extends React.Component {
       user: '',
       userFollowers: '',
       lastUsers: [],
+      error: false,
+      errorCode: ''
     };
   }
 
@@ -28,11 +30,19 @@ class App extends React.Component {
       .then(res => {
         console.log(res);
         this.setState({
-          user: res.data
+          ...this.state,
+          user: res.data,
+          error: false,
+          errorCode: ''
         })
       })
       .catch(err => {
         console.log(err);
+        this.setState({
+          ...this.state,
+          error: true,
+          errorCode: ''
+        })
       });
   }
 
@@ -61,7 +71,7 @@ class App extends React.Component {
 
   submitBack = e => {
     e.preventDefault();
-
+    
     let lastUser = this.state.lastUsers.pop();
     this.requestUserData(lastUser);
     this.requestUserFollowerData(lastUser);
@@ -86,11 +96,9 @@ class App extends React.Component {
     if(e.key === 'Enter') {
       this.submitSearch(e);
     }
-
   }
 
   handleChange = e => {
-    
     this.setState({
       ...this.state,
       [e.target.name] : e.target.value
@@ -119,7 +127,16 @@ class App extends React.Component {
           <Input onKeyPress={this.handleKeyPress} name='searchName' value={this.state.searchName} onChange={this.handleChange} placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
           <Button onClick={this.submitSearch} size='xs' rightIcon={<AiOutlineArrowRight/>}> Search </Button>
         </Center>
-        <UserCard handleBadgeClick={this.handleBadgeClick} followers={this.state.userFollowers} user={this.state.user}/>
+        {
+          this.state.error === false &&
+          <UserCard handleBadgeClick={this.handleBadgeClick} followers={this.state.userFollowers} user={this.state.user}/>
+        }
+        {
+          this.state.error === true &&
+          <Center>
+            <Text fontSize='4xl'> Oops, looks like we encountered an error in your request. </Text>
+          </Center>
+        }
       </ChakraProvider>
     );
   }
