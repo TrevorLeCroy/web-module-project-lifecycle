@@ -1,8 +1,10 @@
 import logo from './logo.svg';
 import './App.css';
-import { ChakraProvider, Center, Box, Text, Input, Avatar, Badge, Stack } from '@chakra-ui/react'
+import { ChakraProvider, Center, Box, Text, Input, Avatar, Badge, Stack, Button } from '@chakra-ui/react';
+import { AiOutlineArrowRight } from 'react-icons/ai';
 import axios from 'axios';
 import React from 'react';
+import UserCard from './components/UserCard';
 
 class App extends React.Component {
   constructor() {
@@ -10,12 +12,18 @@ class App extends React.Component {
     this.state = {
       defaultUsername: 'pakrym',
       user: '',
-      userFollowers: ''
+      userFollowers: '',
+      lastUser: ''
     };
   }
 
   componentDidMount() {
-    axios.get(`https://api.github.com/users/${this.state.defaultUsername}`)
+    this.requestUserData(this.state.defaultUsername);
+    this.requestUserFollowerData(this.state.defaultUsername);
+  }
+
+  requestUserData = (user) => {
+    axios.get(`https://api.github.com/users/${user}`)
       .then(res => {
         console.log(res);
         this.setState({
@@ -25,18 +33,32 @@ class App extends React.Component {
       .catch(err => {
         console.log(err);
       });
+  }
 
-      axios.get(`https://api.github.com/users/${this.state.defaultUsername}/followers`)
-        .then(res => {
-          console.log(res);
-          this.setState({
-            ...this.state,
-            userFollowers: res.data
-          })
-        })
-        .catch(err => {
-          console.log(err);
-        })
+  requestUserFollowerData = (user) => {
+    axios.get(`https://api.github.com/users/${user}/followers`)
+    .then(res => {
+      console.log(res);
+      this.setState({
+        ...this.state,
+        userFollowers: res.data
+      })
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }
+
+  submitSearch = () => {
+    // make another request
+  }
+
+  handleChange = () => {
+
+  }
+
+  handleBadgeClick = (user) => {
+    this.requestUserData(user)
   }
 
   render() {
@@ -44,24 +66,9 @@ class App extends React.Component {
       <ChakraProvider>
         <Center height='25vh'>
           <Input placeholder='Enter a github user' variant='flushed' size='xs' width='50rem'/>
+          <Button onClick={() => {this.submitSearch()}} size='xs' rightIcon={<AiOutlineArrowRight/>}> Search </Button>
         </Center>
-        <Center>
-          <Box display='flex' flexDirection='column' border='1px' borderRadius='10px' borderColor='gray.200' width='20rem' height='10rem'>  
-              <Box display='flex'>
-                <Avatar size='lg' margin='1em' m={2} src={this.state.user.avatar_url}/>
-                <Box>
-                  <Text fontSize='4xl' color='black.200'> {this.state.user.name} </Text>
-                  <Stack>
-                    <Badge> {this.state.user.login} </Badge>
-                    {this.state.user.company !== null && <Badge > Works at {this.state.user.company} </Badge>}
-                  </Stack>
-                </Box>
-              </Box>
-              <Box>
-                <Text fontSize='sm' margin='1em'> {this.state.user.bio} </Text>
-              </Box>
-          </Box>
-        </Center>
+        <UserCard handleBadgeClick={this.handleBadgeClick} followers={this.state.userFollowers} user={this.state.user}/>
       </ChakraProvider>
     );
   }
